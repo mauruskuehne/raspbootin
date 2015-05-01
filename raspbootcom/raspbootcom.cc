@@ -26,7 +26,16 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+
+#ifdef __APPLE__
+#include "TargetConditionals.h"
+#if TARGET_OS_MAC
+#include <machine/endian.h>
+#endif
+#else
 #include <endian.h>
+#endif
+
 #include <stdint.h>
 #include <termios.h>
 
@@ -121,7 +130,11 @@ void send_kernel(int fd, const char *file) {
 	fprintf(stderr, "kernel too big\n");
 	do_exit(fd, EXIT_FAILURE);
     }
-    size = htole32(off);
+#ifdef TARGET_OS_MAC
+    size = off;
+#else
+  size = htole(off);
+#endif
     lseek(file_fd, 0L, SEEK_SET);
 
     fprintf(stderr, "### sending kernel %s [%zu byte]\n", file, (size_t)off);
